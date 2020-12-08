@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./index.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <title>Messenger</title>
+</head>
+
+<body>
+        <div id="message-container">
+            <div class="chat-header">
+                <div class="logo">
+                    <i class="fab fa-facebook-messenger"></i>
+                    <h3>Messenger</h3>
+                </div>
+                <div class="name">
+                    <i class="fas fa-user-circle"></i>
+                    <p id="your-name">your name</p>
+                </div>
+            </div>
+            <div class="chat-section">
+                <div class="main-wrapper">
+                    <div class="chat-content">
+                        <div class="message">
+                            <div class="message-row other-message">
+                                <!-- <div class="message-name"></div> -->
+                                <!-- <div class="message-text"></div> -->
+                                <!-- <div class="message-time"></div> -->
+                            </div>
+                            <div class="message-row you-message">
+                                <!-- <div class="message-name"></div> -->
+                                <!-- <div class="message-text"></div> -->
+                                <!-- <div class="message-time"></div> -->
+                            </div>
+                        </div>
+                        <p class="typing"></p>
+                        <br>
+                    </div>
+                </div>
+            </div>
+            <form>
+                <input type="text" id="msg-input" placeholder="Type a message" autocomplete="off" />
+                <button class="btn-send" type="submit"></button>
+            </form>
+        </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+        $(function () {
+            var socket = io();
+            let typing = false;
+            let name;
+            let timeout = undefined;
+            do {
+                name = prompt('enter name', 'Any nickname will do');
+            } while (!name) {
+                $('#your-name').html(name);
+                // $('#msg-input').focus();
+            }
+            $('.btn-send').on('click',(e) => {
+                e.preventDefault(); // prevents page reloading
+                sendMsg($('#msg-input').val());
+                $('#msg-input').val('');
+                $('.chat-content').scrollTop($('.chat-content').height());
+            })
+            const sendMsg = message => {
+                let msg = {
+                    username: name,
+                    message: message
+                };
+                socket.emit('message-send', msg);
+                console.log(msg)
+                display_message(msg, 'you-message');
+            }
+            socket.on('sendToAll', function (msg) {
+                display_message(msg, 'other-message');
+            });
+            $('#msg-input').keypress((e) => {
+                if (e.which != 15) {
+                    typing = true
+                    socket.emit('typing', { user: name, typing: true })
+                    clearTimeout(timeout)
+                    timeout = setTimeout(typingTimeout, 1500)
+                } else {
+                    clearTimeout(timeout)
+                    typingTimeout()
+                }
+            });
+            socket.on('display_typing', req => {
+                if (req.typing == true) {
+                    $('.typing').text(`${req.user} is typing...`)
+                }
+                else {
+                    $('.typing').text('');
+                }
+            })
+            const typingTimeout = () => {
+                typing = false;
+                socket.emit('typing', {user:name, typing:false})
+            }
+            const display_message = (msg, type) => {
+                const newDiv = document.createElement('div');
+                let className = type;
+                newDiv.classList.add('message-row', className);
+                let time = new Date().toLocaleString();
+                let innerText = `
+                    <div class="message-name">
+                            ${msg.username}
+                    </div>
+                    <div class="message-text">
+                            ${msg.message}
+                    </div>
+                    <div class="message-time">
+                            ${time}
+                    </div>
+
+                `;
+                newDiv.innerHTML = innerText;
+                $('.message').append(newDiv);
+                console.log(newDiv)
+            }
+        });
+    </script>
+</body>
+
+</html>
