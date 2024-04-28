@@ -2,7 +2,8 @@ const path = require('path');
 const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
-const io = require("io")(http);
+const { Server } = require("socket.io");
+const io = new Server(http);
 const port = 8000;
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -33,5 +34,5 @@ io.on('connection', (socket) => {
     // });
 });
 http.listen(port, () => {
-    console.log('SERVER LISTENING TO PORT 3500');
+    console.log('SERVER LISTENING TO PORT 8000');
 })
