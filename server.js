@@ -33,6 +33,11 @@ io.on('connection', (socket) => {
     //     io.emit('chat other message', other_message);
     // });
 });
+
+app.get('/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 http.listen(port, () => {
     console.log('SERVER LISTENING TO PORT 8000');
 })
